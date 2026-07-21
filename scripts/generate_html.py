@@ -164,14 +164,22 @@ html = """<!doctype html>
   }
   .axis-label {
     position: absolute;
-    color: rgba(255,255,255,0.75);
+    color: rgba(255,255,255,0.92);
     font-weight: 700;
-    letter-spacing: 0.12em;
-    font-size: 15px;
+    letter-spacing: 0.1em;
+    font-size: 26px;
     text-transform: uppercase;
     pointer-events: none;
     text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    background: rgba(13,18,32,0.32);
+    padding: 5px 14px;
+    border-radius: 10px;
+    backdrop-filter: blur(2px);
+    white-space: nowrap;
   }
+  #label-top, #label-bottom { transform: translate(-50%, -50%); }
+  #label-left { transform: translate(-50%, -50%) rotate(-90deg); }
+  #label-right { transform: translate(-50%, -50%) rotate(90deg); }
   .axis-line {
     position: absolute;
     background: rgba(255,255,255,0.25);
@@ -211,26 +219,23 @@ html = """<!doctype html>
   #overlay {
     position: fixed;
     inset: 0;
-    background: rgba(5,8,16,0.55);
-    display: none;
-    align-items: center;
-    justify-content: center;
     z-index: 100;
-    padding: 20px;
+    pointer-events: none;
   }
-  #overlay.show { display: flex; }
   #popup {
     background: #fff;
     color: var(--ink);
-    max-width: 480px;
-    width: 100%;
-    border-radius: 16px;
-    padding: 24px 26px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-    max-height: 80vh;
+    width: min(380px, 92vw);
+    padding: 24px 24px 28px;
+    box-shadow: -12px 0 40px rgba(0,0,0,0.35);
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
     overflow-y: auto;
-    position: relative;
+    pointer-events: auto;
+    transform: translateX(100%);
+    transition: transform .25s ease;
   }
+  #overlay.show #popup { transform: translateX(0); }
   #popup h2 { margin: 0 0 4px; font-size: 26px; font-family: var(--serif); font-weight: 600; letter-spacing: 0.01em; }
   #popup .badge {
     display: inline-block;
@@ -298,10 +303,10 @@ html = """<!doctype html>
 <div id="app">
   <div id="viewport">
     <div id="world">
-      <div class="axis-label" style="top:14px; left:50%; transform:translateX(-50%);">Aktivierend</div>
-      <div class="axis-label" style="bottom:14px; left:50%; transform:translateX(-50%);">Deaktivierend</div>
-      <div class="axis-label" style="left:14px; top:50%; transform:translateY(-50%) rotate(-90deg); transform-origin:left center;">Unangenehm</div>
-      <div class="axis-label" style="right:14px; top:50%; transform:translateY(-50%) rotate(90deg); transform-origin:right center;">Angenehm</div>
+      <div class="axis-label" id="label-top">Aktivierend</div>
+      <div class="axis-label" id="label-bottom">Deaktivierend</div>
+      <div class="axis-label" id="label-left">Unangenehm</div>
+      <div class="axis-label" id="label-right">Angenehm</div>
       <div class="axis-line" style="left:50%; top:0; width:1px; height:100%;"></div>
       <div class="axis-line" style="top:50%; left:0; height:1px; width:100%;"></div>
     </div>
@@ -439,8 +444,8 @@ function simulate(iterations){
     // zone containment + weak center pull
     nodes.forEach(n => {
       const cx = (n.zone.x0+n.zone.x1)/2, cy=(n.zone.y0+n.zone.y1)/2;
-      n.x += (cx-n.x)*0.002;
-      n.y += (cy-n.y)*0.002;
+      n.x += (cx-n.x)*0.006;
+      n.y += (cy-n.y)*0.006;
       const hw = n.w/2, hh = n.h/2;
       n.x = Math.min(n.zone.x1-hw, Math.max(n.zone.x0+hw, n.x));
       n.y = Math.min(n.zone.y1-hh, Math.max(n.zone.y0+hh, n.y));
@@ -453,6 +458,25 @@ nodes.forEach(n => {
   n.el.style.top = n.y + 'px';
 });
 
+// ---- content bounding box: keeps axis labels close to the actual clusters ----
+let contentMinX=Infinity, contentMaxX=-Infinity, contentMinY=Infinity, contentMaxY=-Infinity;
+nodes.forEach(n => {
+  contentMinX = Math.min(contentMinX, n.x - n.w/2);
+  contentMaxX = Math.max(contentMaxX, n.x + n.w/2);
+  contentMinY = Math.min(contentMinY, n.y - n.h/2);
+  contentMaxY = Math.max(contentMaxY, n.y + n.h/2);
+});
+const labelGap = 46;
+const midX = (contentMinX+contentMaxX)/2, midY = (contentMinY+contentMaxY)/2;
+document.getElementById('label-top').style.left = midX + 'px';
+document.getElementById('label-top').style.top = (contentMinY - labelGap) + 'px';
+document.getElementById('label-bottom').style.left = midX + 'px';
+document.getElementById('label-bottom').style.top = (contentMaxY + labelGap) + 'px';
+document.getElementById('label-left').style.left = (contentMinX - labelGap) + 'px';
+document.getElementById('label-left').style.top = midY + 'px';
+document.getElementById('label-right').style.left = (contentMaxX + labelGap) + 'px';
+document.getElementById('label-right').style.top = midY + 'px';
+
 // ---- pan & zoom ----
 let scale = 0.5, tx = 0, ty = 0;
 function applyTransform(){
@@ -460,9 +484,12 @@ function applyTransform(){
 }
 function fitInitial(){
   const vw = viewport.clientWidth, vh = viewport.clientHeight;
-  scale = Math.min(vw/WORLD_W, vh/WORLD_H) * 1.0;
-  tx = (vw - WORLD_W*scale)/2;
-  ty = (vh - WORLD_H*scale)/2;
+  const pad = 90;
+  const x0 = contentMinX - labelGap - pad, x1 = contentMaxX + labelGap + pad;
+  const y0 = contentMinY - labelGap - pad, y1 = contentMaxY + labelGap + pad;
+  scale = Math.min(vw/(x1-x0), vh/(y1-y0));
+  tx = vw/2 - ((x0+x1)/2)*scale;
+  ty = vh/2 - ((y0+y1)/2)*scale;
   applyTransform();
 }
 window.addEventListener('resize', fitInitial);
@@ -557,9 +584,33 @@ function highlight(id){
   });
 }
 
+function focusOn(ids){
+  const relevant = ids.map(i => nodeById[i]).filter(Boolean);
+  if (!relevant.length) return;
+  let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+  relevant.forEach(n => {
+    minX = Math.min(minX, n.x-n.w/2); maxX = Math.max(maxX, n.x+n.w/2);
+    minY = Math.min(minY, n.y-n.h/2); maxY = Math.max(maxY, n.y+n.h/2);
+  });
+  const pad = 80;
+  minX -= pad; maxX += pad; minY -= pad; maxY += pad;
+  const vw = viewport.clientWidth, vh = viewport.clientHeight;
+  const panelWidth = Math.min(380, vw*0.92);
+  const availW = Math.max(200, vw - panelWidth);
+  const fitScale = Math.min(availW/(maxX-minX), vh/(maxY-minY));
+  scale = Math.min(1.3, Math.max(0.3, fitScale));
+  tx = availW/2 - ((minX+maxX)/2)*scale;
+  ty = vh/2 - ((minY+maxY)/2)*scale;
+  world.style.transition = 'transform .45s cubic-bezier(.2,.7,.3,1)';
+  applyTransform();
+  clearTimeout(focusOn._t);
+  focusOn._t = setTimeout(() => { world.style.transition = ''; }, 460);
+}
+
 function openPopup(id){
   const t = byId[id];
   highlight(id);
+  focusOn([id, ...(t.related||[])]);
   const color = t.valence === 'angenehm' ? 'var(--angenehm)' : 'var(--unangenehm)';
   const relatedHtml = (t.related||[]).map(rid => {
     const rt = byId[rid];
@@ -584,13 +635,13 @@ function closePopup(){
   overlay.classList.remove('show');
   clearHighlight();
 }
-overlay.addEventListener('click', e => { if (e.target === overlay) closePopup(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup(); });
 
 world.addEventListener('click', e => {
   const chip = e.target.closest('.chip');
-  if (!chip || moved) return;
-  openPopup(chip.dataset.id);
+  if (moved) return;
+  if (chip){ openPopup(chip.dataset.id); return; }
+  if (overlay.classList.contains('show')) closePopup();
 });
 
 // ---- search ----
