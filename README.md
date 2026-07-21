@@ -65,3 +65,36 @@ Das Widget passt sich in der Breite der Spalte an, in der es liegt, und ist
 in der Höhe auf max. 760px begrenzt (Rand mit abgerundeten Ecken), damit es
 sich wie ein normaler Seitenabschnitt einfügt statt den ganzen Bildschirm zu
 beanspruchen.
+
+---
+
+# Selbsteinschätzung (Blanko-Raster)
+
+Zweites, eigenständiges Widget: dasselbe Valenz-Arousal-Raster, aber ohne
+die 184 Begriffe. Besucher:innen klicken selbst eine Stelle an ("so fühle
+ich mich gerade"), können optional eine Notiz dazuschreiben, und sehen ihre
+eigenen früheren Einträge als Punkte im Raster wieder.
+
+- **`selfcheck-embed-code.txt`** – Datei zum Einbetten (siehe Anleitung
+  oben, gleiches Vorgehen: öffnen, alles kopieren, in ein "Raw HTML"-Element
+  einfügen).
+- **`selfcheck-index.html`** – dieselbe Sache als eigenständige Seite, nur
+  zum lokalen Anschauen.
+- `scripts/generate_selfcheck.py` erzeugt beide Dateien neu (kein
+  Excel/JSON nötig, hier gibt es keine Begriffsdaten).
+
+**Wichtig, wie die Daten gespeichert werden:** Jeder Eintrag (Position +
+Notiz + Zeitstempel) landet ausschließlich im `localStorage` des jeweiligen
+Browsers – es gibt keine Datenbank und keinen Server, der etwas davon sieht.
+Das heißt:
+- Einträge sind nur auf dem Gerät/Browser sichtbar, mit dem sie erstellt
+  wurden (kein Abgleich zwischen Handy und Laptop).
+- Löscht jemand die Browserdaten (oder nutzt privates Fenster), sind die
+  Einträge weg.
+- Niemand außer der Person selbst – auch nicht ihr als Betreiberin der
+  Seite – kann diese Einträge einsehen oder auswerten.
+
+Falls später eine echte Auswertung (z. B. anonyme Statistik über alle
+Besucher:innen) gewünscht ist, braucht es einen Server/eine Datenbank
+dahinter – das ist ein größerer nächster Schritt, kein Detail an diesem
+Widget.
