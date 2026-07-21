@@ -28,6 +28,7 @@ WIDGET_CSS = """
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -247,9 +248,15 @@ WIDGET_CSS = """
 .bp-self #sc-panel .row { display: flex; gap: 8px; }
 
 @media (max-width: 640px) {
-  .bp-self #sc-app { flex-direction: column; }
-  .bp-self #sc-gridwrap { padding: 50px 30px 40px; }
+  .bp-self #sc-app { flex-direction: column; height: min(90vh, 700px); }
+  .bp-self #sc-toolbar { padding: 10px 10px 0; }
+  .bp-self #sc-gridwrap { padding: 22px 20px; }
   .bp-self .sc-meta-label { display: none; }
+  .bp-self .sc-label.top { top: -24px; font-size: 12px; }
+  .bp-self .sc-label.bottom { bottom: -24px; font-size: 12px; }
+  .bp-self #sc-hint { padding: 0 12px 8px; }
+  .bp-self #sc-app.panel-open #sc-privacy,
+  .bp-self #sc-app.panel-open #sc-hint { display: none; }
   .bp-self #sc-panel {
     width: 100% !important;
     height: 0;
@@ -257,8 +264,9 @@ WIDGET_CSS = """
     box-shadow: 0 -8px 24px rgba(0,0,0,0.15);
     transition: height .28s ease;
   }
-  .bp-self #sc-panel.show { height: min(62%, 420px); }
-  .bp-self #sc-panel-inner { width: 100%; }
+  .bp-self #sc-panel.show { height: min(46%, 320px); }
+  .bp-self #sc-panel-inner { width: 100%; padding: 16px 18px; }
+  .bp-self #sc-panel textarea { min-height: 70px; }
 }
 """
 
@@ -301,6 +309,7 @@ BODY = """
 JS = """
 (function(){
 const widget = document.currentScript.previousElementSibling;
+const app = widget.querySelector('#sc-app');
 const grid = widget.querySelector('#sc-grid');
 const panel = widget.querySelector('#sc-panel');
 const panelInner = widget.querySelector('#sc-panel-inner');
@@ -358,6 +367,7 @@ function clearPending(){
 
 function closePanel(){
   panel.classList.remove('show');
+  app.classList.remove('panel-open');
   activeId = null;
   clearPending();
   renderDots();
@@ -386,7 +396,7 @@ function openNew(x, y){
       <button class="sc-btn" id="sc-cancel">Abbrechen</button>
     </div>
   `;
-  panel.classList.add('show');
+  panel.classList.add('show'); app.classList.add('panel-open');
   panelInner.querySelector('#sc-close').addEventListener('click', closePanel);
   panelInner.querySelector('#sc-cancel').addEventListener('click', closePanel);
   panelInner.querySelector('#sc-save').addEventListener('click', () => {
@@ -419,7 +429,7 @@ function openView(id){
       <button class="sc-btn danger" id="sc-delete">Löschen</button>
     </div>
   `;
-  panel.classList.add('show');
+  panel.classList.add('show'); app.classList.add('panel-open');
   panelInner.querySelector('#sc-close').addEventListener('click', closePanel);
   panelInner.querySelector('#sc-delete').addEventListener('click', () => {
     entries = entries.filter(x => x.id !== id);
