@@ -5,335 +5,334 @@ with open("/tmp/claude-0/-home-user-bauchipedia/3f722902-a4d6-55d0-b13a-9e6c4eaf
 
 terms_json = json.dumps(terms, ensure_ascii=False).replace("</script", "<\\/script")
 
-html = """<!doctype html>
-<html lang="de">
-<head>
-<meta charset="utf-8">
-<title>Bauchipedia – Interaktives Gefühlsraster</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  :root {
-    --unangenehm: #6a3fa0;
-    --angenehm: #21b39a;
-    --ink: #16234a;
-    --chip-bg: rgba(255,255,255,0.92);
-    --chip-border: rgba(22,35,74,0.15);
-    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  }
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0; height: 100%;
-    font-family: var(--sans);
-    background: #0d1220;
-    color: var(--ink);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .chip, .chip:hover { transition: none !important; transform: translate(-50%, -50%) !important; }
-  }
-  button:focus-visible, input:focus-visible, .chip:focus-visible {
-    outline: 2px solid #7fe0d0;
-    outline-offset: 2px;
-  }
-  #app {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    overflow: hidden;
-    background: #0d1220;
-  }
-  #toolbar {
-    position: absolute;
-    top: 12px; left: 12px; right: 12px;
-    z-index: 30;
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    pointer-events: none;
-  }
-  #toolbar > * { pointer-events: auto; }
-  #wordmark {
-    background: rgba(13,18,32,0.85);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 10px;
-    padding: 8px 14px;
-    color: #fff;
-    backdrop-filter: blur(4px);
-  }
-  #wordmark .title {
-    font-family: var(--serif);
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-  }
-  #wordmark .sub {
-    font-size: 11px;
-    color: rgba(255,255,255,0.55);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-top: 2px;
-  }
-  #search-wrap {
-    position: relative;
-    background: rgba(13,18,32,0.85);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 10px;
-    padding: 8px 10px;
-    backdrop-filter: blur(4px);
-  }
-  #search {
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #fff;
-    font-size: 14px;
-    width: 220px;
-  }
-  #search::placeholder { color: rgba(255,255,255,0.5); }
-  #search-results {
-    position: absolute;
-    top: 100%; left: 0; right: 0;
-    margin-top: 6px;
-    background: #131a2e;
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 8px;
-    overflow: hidden;
-    display: none;
-    max-height: 260px;
-    overflow-y: auto;
-  }
-  #search-results button {
-    display: block;
-    width: 100%;
-    text-align: left;
-    background: transparent;
-    border: none;
-    color: #fff;
-    padding: 8px 10px;
-    font-size: 14px;
-    cursor: pointer;
-  }
-  #search-results button:hover { background: rgba(255,255,255,0.1); }
-  .toolbtn {
-    background: rgba(13,18,32,0.85);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: #fff;
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 14px;
-    cursor: pointer;
-    backdrop-filter: blur(4px);
-  }
-  .toolbtn:hover { background: rgba(255,255,255,0.12); }
-  #zoomctl {
-    display: flex;
-    gap: 4px;
-    margin-left: auto;
-  }
-  #hint {
-    position: absolute;
-    bottom: 10px; left: 12px;
-    z-index: 30;
-    color: rgba(255,255,255,0.55);
-    font-size: 12px;
-    background: rgba(13,18,32,0.6);
-    padding: 6px 10px;
-    border-radius: 8px;
-    pointer-events: none;
-  }
-  #viewport {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    cursor: grab;
-  }
-  #viewport.dragging { cursor: grabbing; }
-  #world {
-    position: absolute;
-    left: 0; top: 0;
-    width: WORLD_Wpx;
-    height: WORLD_Hpx;
-    transform-origin: 0 0;
-    background:
-      radial-gradient(ellipse at 15% 15%, rgba(120,60,170,0.9), rgba(120,60,170,0) 60%),
-      radial-gradient(ellipse at 85% 15%, rgba(30,180,160,0.9), rgba(30,180,160,0) 60%),
-      radial-gradient(ellipse at 15% 85%, rgba(150,110,190,0.55), rgba(150,110,190,0) 60%),
-      radial-gradient(ellipse at 85% 85%, rgba(90,190,175,0.55), rgba(90,190,175,0) 60%),
-      linear-gradient(135deg, #4a2f7a 0%, #35407a 35%, #2b6f7e 65%, #1f9a86 100%);
-  }
-  .axis-label {
-    position: absolute;
-    color: rgba(255,255,255,0.92);
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    font-size: 26px;
-    text-transform: uppercase;
-    pointer-events: none;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
-    background: rgba(13,18,32,0.32);
-    padding: 5px 14px;
-    border-radius: 10px;
-    backdrop-filter: blur(2px);
-    white-space: nowrap;
-  }
-  #label-top, #label-bottom { transform: translate(-50%, -50%); }
-  #label-left { transform: translate(-50%, -50%) rotate(-90deg); }
-  #label-right { transform: translate(-50%, -50%) rotate(90deg); }
-  .axis-line {
-    position: absolute;
-    background: rgba(255,255,255,0.25);
-    pointer-events: none;
-  }
-  .chip {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    background: var(--chip-bg);
-    border: 1px solid var(--chip-border);
-    color: var(--ink);
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-    cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
-    transition: opacity .2s ease, transform .15s ease, box-shadow .15s ease;
-    user-select: none;
-  }
-  .chip:hover { transform: translate(-50%, -50%) scale(1.08); }
-  .chip.dim { opacity: 0.18; }
-  .chip.related {
-    background: #ffe9a8;
-    border-color: #d9a600;
-    box-shadow: 0 0 0 2px #ffcf4d, 0 2px 8px rgba(0,0,0,0.3);
-    opacity: 1;
-  }
-  .chip.active {
-    background: #16234a;
-    color: #fff;
-    box-shadow: 0 0 0 3px #7fe0d0, 0 2px 10px rgba(0,0,0,0.4);
-    opacity: 1;
-    z-index: 5;
-  }
-  #overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    pointer-events: none;
-  }
-  #popup {
-    background: #fff;
-    color: var(--ink);
-    width: min(380px, 92vw);
-    padding: 24px 24px 28px;
-    box-shadow: -12px 0 40px rgba(0,0,0,0.35);
-    position: absolute;
-    top: 0; right: 0; bottom: 0;
-    overflow-y: auto;
-    pointer-events: auto;
-    transform: translateX(100%);
-    transition: transform .25s ease;
-  }
-  #overlay.show #popup { transform: translateX(0); }
-  #popup h2 { margin: 0 0 4px; font-size: 26px; font-family: var(--serif); font-weight: 600; letter-spacing: 0.01em; }
-  #popup .badge {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 3px 9px;
-    border-radius: 999px;
-    margin-bottom: 12px;
-    color: #fff;
-  }
-  #popup .desc { line-height: 1.55; font-size: 15px; margin: 0 0 14px; }
-  #popup .example {
-    font-style: italic;
-    color: #445;
-    background: #f4f5fb;
-    border-left: 3px solid var(--angenehm);
-    padding: 10px 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    margin: 0 0 16px;
-  }
-  #popup .related-title {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #888;
-    margin-bottom: 8px;
-  }
-  #popup .related-list { display: flex; flex-wrap: wrap; gap: 6px; }
-  #popup .related-list button {
-    border: 1px solid var(--chip-border);
-    background: #f0f1f7;
-    border-radius: 999px;
-    padding: 5px 11px;
-    font-size: 13px;
-    cursor: pointer;
-    font-weight: 600;
-    color: var(--ink);
-  }
-  #popup .related-list button:hover { background: #e2e4f2; }
-  #popup .related-list span.plain {
-    border: 1px dashed #ccc;
-    border-radius: 999px;
-    padding: 5px 11px;
-    font-size: 13px;
-    color: #999;
-  }
-  #popup .close {
-    position: absolute;
-    top: 14px; right: 14px;
-    background: #f0f1f7;
-    border: none;
-    width: 30px; height: 30px;
-    border-radius: 50%;
-    font-size: 16px;
-    cursor: pointer;
-    color: #555;
-  }
-  #popup .close:hover { background: #e2e4f2; }
-</style>
-</head>
-<body>
-<div id="app">
-  <div id="viewport">
-    <div id="world">
-      <div class="axis-label" id="label-top">Aktivierend</div>
-      <div class="axis-label" id="label-bottom">Deaktivierend</div>
-      <div class="axis-label" id="label-left">Unangenehm</div>
-      <div class="axis-label" id="label-right">Angenehm</div>
-      <div class="axis-line" style="left:50%; top:0; width:1px; height:100%;"></div>
-      <div class="axis-line" style="top:50%; left:0; height:1px; width:100%;"></div>
+# Scoped under .bp-widget so pasting this into an existing WordPress page
+# (WPBakery "Raw HTML" element) cannot leak styles onto the rest of the site.
+WIDGET_CSS = """
+.bp-widget {
+  --unangenehm: #6a3fa0;
+  --angenehm: #21b39a;
+  --ink: #16234a;
+  --chip-bg: rgba(255,255,255,0.92);
+  --chip-border: rgba(22,35,74,0.15);
+  --serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--sans);
+  color: var(--ink);
+}
+.bp-widget, .bp-widget * { box-sizing: border-box; }
+@media (prefers-reduced-motion: reduce) {
+  .bp-widget .chip, .bp-widget .chip:hover { transition: none !important; transform: translate(-50%, -50%) !important; }
+}
+.bp-widget button:focus-visible, .bp-widget input:focus-visible, .bp-widget .chip:focus-visible {
+  outline: 2px solid #7fe0d0;
+  outline-offset: 2px;
+}
+.bp-widget #app {
+  position: relative;
+  width: 100%;
+  height: min(80vh, 760px);
+  min-height: 460px;
+  overflow: hidden;
+  background: #0d1220;
+  border-radius: 18px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+}
+.bp-widget #toolbar {
+  position: absolute;
+  top: 12px; left: 12px; right: 12px;
+  z-index: 30;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  pointer-events: none;
+}
+.bp-widget #toolbar > * { pointer-events: auto; }
+.bp-widget #wordmark {
+  background: rgba(13,18,32,0.85);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  padding: 8px 14px;
+  color: #fff;
+  backdrop-filter: blur(4px);
+}
+.bp-widget #wordmark .title {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.bp-widget #wordmark .sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+.bp-widget #search-wrap {
+  position: relative;
+  background: rgba(13,18,32,0.85);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  padding: 8px 10px;
+  backdrop-filter: blur(4px);
+}
+.bp-widget #search {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 14px;
+  width: 220px;
+}
+.bp-widget #search::placeholder { color: rgba(255,255,255,0.5); }
+.bp-widget #search-results {
+  position: absolute;
+  top: 100%; left: 0; right: 0;
+  margin-top: 6px;
+  background: #131a2e;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  overflow: hidden;
+  display: none;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.bp-widget #search-results button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: #fff;
+  padding: 8px 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.bp-widget #search-results button:hover { background: rgba(255,255,255,0.1); }
+.bp-widget .toolbtn {
+  background: rgba(13,18,32,0.85);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+.bp-widget .toolbtn:hover { background: rgba(255,255,255,0.12); }
+.bp-widget #zoomctl {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.bp-widget #hint {
+  position: absolute;
+  bottom: 10px; left: 12px;
+  z-index: 30;
+  color: rgba(255,255,255,0.55);
+  font-size: 12px;
+  background: rgba(13,18,32,0.6);
+  padding: 6px 10px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+.bp-widget #viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: grab;
+}
+.bp-widget #viewport.dragging { cursor: grabbing; }
+.bp-widget #world {
+  position: absolute;
+  left: 0; top: 0;
+  width: WORLD_Wpx;
+  height: WORLD_Hpx;
+  transform-origin: 0 0;
+  background:
+    radial-gradient(ellipse at 15% 15%, rgba(120,60,170,0.9), rgba(120,60,170,0) 60%),
+    radial-gradient(ellipse at 85% 15%, rgba(30,180,160,0.9), rgba(30,180,160,0) 60%),
+    radial-gradient(ellipse at 15% 85%, rgba(150,110,190,0.55), rgba(150,110,190,0) 60%),
+    radial-gradient(ellipse at 85% 85%, rgba(90,190,175,0.55), rgba(90,190,175,0) 60%),
+    linear-gradient(135deg, #4a2f7a 0%, #35407a 35%, #2b6f7e 65%, #1f9a86 100%);
+}
+.bp-widget .axis-label {
+  position: absolute;
+  color: rgba(255,255,255,0.92);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  font-size: 26px;
+  text-transform: uppercase;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  background: rgba(13,18,32,0.32);
+  padding: 5px 14px;
+  border-radius: 10px;
+  backdrop-filter: blur(2px);
+  white-space: nowrap;
+}
+.bp-widget #label-top, .bp-widget #label-bottom { transform: translate(-50%, -50%); }
+.bp-widget #label-left { transform: translate(-50%, -50%) rotate(-90deg); }
+.bp-widget #label-right { transform: translate(-50%, -50%) rotate(90deg); }
+.bp-widget .axis-line {
+  position: absolute;
+  background: rgba(255,255,255,0.25);
+  pointer-events: none;
+}
+.bp-widget .chip {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  color: var(--ink);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  transition: opacity .2s ease, transform .15s ease, box-shadow .15s ease;
+  user-select: none;
+}
+.bp-widget .chip:hover { transform: translate(-50%, -50%) scale(1.08); }
+.bp-widget .chip.dim { opacity: 0.18; }
+.bp-widget .chip.related {
+  background: #ffe9a8;
+  border-color: #d9a600;
+  box-shadow: 0 0 0 2px #ffcf4d, 0 2px 8px rgba(0,0,0,0.3);
+  opacity: 1;
+}
+.bp-widget .chip.active {
+  background: #16234a;
+  color: #fff;
+  box-shadow: 0 0 0 3px #7fe0d0, 0 2px 10px rgba(0,0,0,0.4);
+  opacity: 1;
+  z-index: 5;
+}
+.bp-widget #overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+.bp-widget #popup {
+  background: #fff;
+  color: var(--ink);
+  width: min(380px, 92%);
+  padding: 24px 24px 28px;
+  box-shadow: -12px 0 40px rgba(0,0,0,0.35);
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  overflow-y: auto;
+  pointer-events: auto;
+  transform: translateX(100%);
+  transition: transform .25s ease;
+  border-radius: 0 18px 18px 0;
+}
+.bp-widget #overlay.show #popup { transform: translateX(0); }
+.bp-widget #popup h2 { margin: 0 0 4px; font-size: 26px; font-family: var(--serif); font-weight: 600; letter-spacing: 0.01em; }
+.bp-widget #popup .badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+  color: #fff;
+}
+.bp-widget #popup .desc { line-height: 1.55; font-size: 15px; margin: 0 0 14px; }
+.bp-widget #popup .example {
+  font-style: italic;
+  color: #445;
+  background: #f4f5fb;
+  border-left: 3px solid var(--angenehm);
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+.bp-widget #popup .related-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888;
+  margin-bottom: 8px;
+}
+.bp-widget #popup .related-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.bp-widget #popup .related-list button {
+  border: 1px solid var(--chip-border);
+  background: #f0f1f7;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
+}
+.bp-widget #popup .related-list button:hover { background: #e2e4f2; }
+.bp-widget #popup .related-list span.plain {
+  border: 1px dashed #ccc;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 13px;
+  color: #999;
+}
+.bp-widget #popup .close {
+  position: absolute;
+  top: 14px; right: 14px;
+  background: #f0f1f7;
+  border: none;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  color: #555;
+}
+.bp-widget #popup .close:hover { background: #e2e4f2; }
+"""
+
+WIDGET_BODY = """
+<div class="bp-widget">
+  <div id="app">
+    <div id="viewport">
+      <div id="world">
+        <div class="axis-label" id="label-top">Aktivierend</div>
+        <div class="axis-label" id="label-bottom">Deaktivierend</div>
+        <div class="axis-label" id="label-left">Unangenehm</div>
+        <div class="axis-label" id="label-right">Angenehm</div>
+        <div class="axis-line" style="left:50%; top:0; width:1px; height:100%;"></div>
+        <div class="axis-line" style="top:50%; left:0; height:1px; width:100%;"></div>
+      </div>
+    </div>
+    <div id="toolbar">
+      <div id="wordmark">
+        <div class="title">Bauchipedia</div>
+        <div class="sub">Gefühlsraster</div>
+      </div>
+      <div id="search-wrap">
+        <input id="search" type="text" placeholder="Begriff suchen…" autocomplete="off">
+        <div id="search-results"></div>
+      </div>
+      <div id="zoomctl">
+        <button class="toolbtn" id="zoom-out">−</button>
+        <button class="toolbtn" id="zoom-reset">Reset</button>
+        <button class="toolbtn" id="zoom-in">+</button>
+      </div>
+    </div>
+    <div id="hint">Ziehen zum Verschieben · Scrollen/Pinch zum Zoomen · Klick für Details</div>
+    <div id="overlay">
+      <div id="popup"></div>
     </div>
   </div>
-  <div id="toolbar">
-    <div id="wordmark">
-      <div class="title">Bauchipedia</div>
-      <div class="sub">Gefühlsraster</div>
-    </div>
-    <div id="search-wrap">
-      <input id="search" type="text" placeholder="Begriff suchen…" autocomplete="off">
-      <div id="search-results"></div>
-    </div>
-    <div id="zoomctl">
-      <button class="toolbtn" id="zoom-out">−</button>
-      <button class="toolbtn" id="zoom-reset">Reset</button>
-      <button class="toolbtn" id="zoom-in">+</button>
-    </div>
-  </div>
-  <div id="hint">Ziehen zum Verschieben · Scrollen/Pinch zum Zoomen · Klick für Details</div>
 </div>
+"""
 
-<div id="overlay">
-  <div id="popup"></div>
-</div>
-
-<script>
+WIDGET_JS = """
+(function(){
 const TERMS = TERMS_JSON_PLACEHOLDER;
 
 const WORLD_W = WORLD_W_PLACEHOLDER;
@@ -342,8 +341,9 @@ const WORLD_H = WORLD_H_PLACEHOLDER;
 const byId = {};
 TERMS.forEach(t => byId[t.id] = t);
 
-const world = document.getElementById('world');
-const viewport = document.getElementById('viewport');
+const widget = document.currentScript.previousElementSibling;
+const world = widget.querySelector('#world');
+const viewport = widget.querySelector('#viewport');
 
 // ---- build chip elements (initial position = zone center, refined by simulation) ----
 const margin = 60;
@@ -468,14 +468,14 @@ nodes.forEach(n => {
 });
 const labelGap = 46;
 const midX = (contentMinX+contentMaxX)/2, midY = (contentMinY+contentMaxY)/2;
-document.getElementById('label-top').style.left = midX + 'px';
-document.getElementById('label-top').style.top = (contentMinY - labelGap) + 'px';
-document.getElementById('label-bottom').style.left = midX + 'px';
-document.getElementById('label-bottom').style.top = (contentMaxY + labelGap) + 'px';
-document.getElementById('label-left').style.left = (contentMinX - labelGap) + 'px';
-document.getElementById('label-left').style.top = midY + 'px';
-document.getElementById('label-right').style.left = (contentMaxX + labelGap) + 'px';
-document.getElementById('label-right').style.top = midY + 'px';
+widget.querySelector('#label-top').style.left = midX + 'px';
+widget.querySelector('#label-top').style.top = (contentMinY - labelGap) + 'px';
+widget.querySelector('#label-bottom').style.left = midX + 'px';
+widget.querySelector('#label-bottom').style.top = (contentMaxY + labelGap) + 'px';
+widget.querySelector('#label-left').style.left = (contentMinX - labelGap) + 'px';
+widget.querySelector('#label-left').style.top = midY + 'px';
+widget.querySelector('#label-right').style.left = (contentMaxX + labelGap) + 'px';
+widget.querySelector('#label-right').style.top = midY + 'px';
 
 // ---- pan & zoom ----
 let scale = 0.5, tx = 0, ty = 0;
@@ -525,15 +525,15 @@ viewport.addEventListener('wheel', e => {
   zoomAt(e.clientX, e.clientY, factor);
 }, {passive:false});
 
-document.getElementById('zoom-in').addEventListener('click', () => {
+widget.querySelector('#zoom-in').addEventListener('click', () => {
   const r = viewport.getBoundingClientRect();
   zoomAt(r.left+r.width/2, r.top+r.height/2, 1.25);
 });
-document.getElementById('zoom-out').addEventListener('click', () => {
+widget.querySelector('#zoom-out').addEventListener('click', () => {
   const r = viewport.getBoundingClientRect();
   zoomAt(r.left+r.width/2, r.top+r.height/2, 1/1.25);
 });
-document.getElementById('zoom-reset').addEventListener('click', fitInitial);
+widget.querySelector('#zoom-reset').addEventListener('click', fitInitial);
 
 // touch support
 let touchState = null;
@@ -557,7 +557,6 @@ viewport.addEventListener('touchmove', e => {
     const [a,b] = e.touches;
     const dist = Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY);
     const factor = dist/touchState.dist;
-    const cx = (a.clientX+b.clientX)/2, cy=(a.clientY+b.clientY)/2;
     scale = Math.min(3, Math.max(0.15, touchState.scale*factor));
     applyTransform();
   }
@@ -565,8 +564,8 @@ viewport.addEventListener('touchmove', e => {
 viewport.addEventListener('touchend', () => { touchState = null; });
 
 // ---- click / highlight / popup ----
-const overlay = document.getElementById('overlay');
-const popup = document.getElementById('popup');
+const overlay = widget.querySelector('#overlay');
+const popup = widget.querySelector('#popup');
 
 function clearHighlight(){
   nodes.forEach(n => n.el.classList.remove('dim','related','active'));
@@ -645,8 +644,8 @@ world.addEventListener('click', e => {
 });
 
 // ---- search ----
-const searchInput = document.getElementById('search');
-const searchResults = document.getElementById('search-results');
+const searchInput = widget.querySelector('#search');
+const searchResults = widget.querySelector('#search-results');
 function panToNode(id){
   const n = nodeById[id];
   const vw = viewport.clientWidth, vh = viewport.clientHeight;
@@ -671,18 +670,37 @@ searchInput.addEventListener('input', () => {
     });
   });
 });
-</script>
+})();
+"""
+
+WIDGET_CSS = WIDGET_CSS.replace("WORLD_Wpx", "2600px").replace("WORLD_Hpx", "2000px")
+WIDGET_JS = (WIDGET_JS
+    .replace("TERMS_JSON_PLACEHOLDER", terms_json)
+    .replace("WORLD_W_PLACEHOLDER", "2600")
+    .replace("WORLD_H_PLACEHOLDER", "2000"))
+
+EMBED_FRAGMENT = f"<style>{WIDGET_CSS}</style>\n{WIDGET_BODY}\n<script>{WIDGET_JS}</script>\n"
+
+FULL_HTML = f"""<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Bauchipedia – Interaktives Gefühlsraster</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body {{ margin: 0; padding: 16px; background: #eef0f5; }}
+</style>
+</head>
+<body>
+{EMBED_FRAGMENT}
 </body>
 </html>
 """
 
-html = html.replace("TERMS_JSON_PLACEHOLDER", terms_json)
-html = html.replace("WORLD_W_PLACEHOLDER", "2600")
-html = html.replace("WORLD_H_PLACEHOLDER", "2000")
-html = html.replace("WORLD_Wpx", "2600px")
-html = html.replace("WORLD_Hpx", "2000px")
-
-out_path = "/tmp/claude-0/-home-user-bauchipedia/3f722902-a4d6-55d0-b13a-9e6c4eafbf65/scratchpad/bauchipedia-grid.html"
-with open(out_path, "w", encoding="utf-8") as f:
-    f.write(html)
-print("wrote", out_path, len(html), "chars")
+out_dir = "/tmp/claude-0/-home-user-bauchipedia/3f722902-a4d6-55d0-b13a-9e6c4eafbf65/scratchpad/"
+with open(out_dir + "bauchipedia-grid.html", "w", encoding="utf-8") as f:
+    f.write(FULL_HTML)
+with open(out_dir + "bauchipedia-embed.html", "w", encoding="utf-8") as f:
+    f.write(EMBED_FRAGMENT)
+print("wrote index (full):", len(FULL_HTML), "chars")
+print("wrote embed fragment:", len(EMBED_FRAGMENT), "chars")

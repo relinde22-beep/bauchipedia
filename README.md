@@ -1,8 +1,15 @@
 # Bauchipedia – Interaktives Gefühlsraster
 
-Ein einzelnes, in sich geschlossenes HTML-Widget (`index.html`), das die 184
-Gefühlsbegriffe aus den vier Quadranten-Tabellen (angenehm/unangenehm ×
-aktivierend/deaktivierend) als anklickbares, zoombares Raster darstellt.
+Ein in sich geschlossenes HTML-Widget, das die 184 Gefühlsbegriffe aus den
+vier Quadranten-Tabellen (angenehm/unangenehm × aktivierend/deaktivierend)
+als anklickbares, zoombares Raster darstellt.
+
+Es gibt zwei Dateien mit demselben Inhalt, für zwei Zwecke:
+
+- **`embed.html`** – nur der Widget-Code (Style + Markup + Script, ohne
+  `<html>/<head>/<body>`). **Das ist die Datei zum Einbetten in WordPress.**
+- **`index.html`** – dieselbe Sache als vollständige, eigenständige Seite,
+  nur zum lokalen Anschauen im Browser (Doppelklick öffnen).
 
 ## Funktionen
 
@@ -23,7 +30,7 @@ Gefühlsbegriff, Beschreibung, Beispielsatz, Verwandte Begriffe). Nach einer
 ```bash
 pip install openpyxl rapidfuzz
 python3 scripts/build_data.py      # erzeugt data/terms.json
-python3 scripts/generate_html.py   # erzeugt index.html
+python3 scripts/generate_html.py   # erzeugt index.html und embed.html
 ```
 
 `build_data.py` löst die "Verwandte Begriffe"-Spalte per Fuzzy-Matching gegen
@@ -39,6 +46,14 @@ nicht pixelgenau nachgebaut.
 
 ## Einbindung in WordPress (WPBakery)
 
-1. Seite/Beitrag bearbeiten → WPBakery-Element **"Raw HTML"** hinzufügen
-2. Inhalt von `index.html` komplett hineinkopieren
-3. Speichern/Aktualisieren
+1. `embed.html` mit einem reinen Text-Editor öffnen (nicht Word) und den
+   kompletten Inhalt kopieren (Strg/Cmd+A, dann kopieren)
+2. Seite/Beitrag im Backend bearbeiten → mit "+" ein Element hinzufügen →
+   nach **"Raw HTML"** suchen und einfügen
+3. Den kopierten Inhalt in das Textfeld einfügen
+4. Speichern/Aktualisieren, dann die Seite ansehen
+
+Das Widget passt sich in der Breite der Spalte an, in der es liegt, und ist
+in der Höhe auf max. 760px begrenzt (Rand mit abgerundeten Ecken), damit es
+sich wie ein normaler Seitenabschnitt einfügt statt den ganzen Bildschirm zu
+beanspruchen.
