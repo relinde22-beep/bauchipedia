@@ -154,11 +154,8 @@
   height: 2000px;
   transform-origin: 0 0;
   background:
-    radial-gradient(ellipse at 15% 15%, rgba(120,60,170,0.9), rgba(120,60,170,0) 60%),
-    radial-gradient(ellipse at 85% 15%, rgba(30,180,160,0.9), rgba(30,180,160,0) 60%),
-    radial-gradient(ellipse at 15% 85%, rgba(150,110,190,0.55), rgba(150,110,190,0) 60%),
-    radial-gradient(ellipse at 85% 85%, rgba(90,190,175,0.55), rgba(90,190,175,0) 60%),
-    linear-gradient(135deg, #4a2f7a 0%, #35407a 35%, #2b6f7e 65%, #1f9a86 100%);
+    linear-gradient(to bottom, rgba(233,235,240,0) 0%, rgba(233,235,240,0.55) 58%, rgba(233,235,240,0.96) 100%),
+    linear-gradient(to right, #7a3fa0 0%, #46528f 50%, #1f9a86 100%);
 }
 .bp-widget .axis-label {
   position: absolute;
@@ -178,6 +175,21 @@
 .bp-widget #label-top, .bp-widget #label-bottom { transform: translate(-50%, -50%); }
 .bp-widget #label-left { transform: translate(-50%, -50%) rotate(-90deg); }
 .bp-widget #label-right { transform: translate(-50%, -50%) rotate(90deg); }
+.bp-widget .axis-meta-label {
+  position: absolute;
+  color: rgba(255,255,255,0.8);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  font-size: 11px;
+  text-transform: uppercase;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  background: rgba(13,18,32,0.26);
+  padding: 3px 9px;
+  border-radius: 8px;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+}
 .bp-widget .axis-line {
   position: absolute;
   background: rgba(255,255,255,0.25);
@@ -306,6 +318,10 @@
         <div class="axis-label" id="label-bottom">Deaktivierend</div>
         <div class="axis-label" id="label-left">Unangenehm</div>
         <div class="axis-label" id="label-right">Angenehm</div>
+        <div class="axis-meta-label" id="label-arousal-top">↑ Arousal</div>
+        <div class="axis-meta-label" id="label-arousal-bottom">↓ Arousal</div>
+        <div class="axis-meta-label" id="label-valenz-left">← Valenz</div>
+        <div class="axis-meta-label" id="label-valenz-right">Valenz →</div>
         <div class="axis-line" style="left:50%; top:0; width:1px; height:100%;"></div>
         <div class="axis-line" style="top:50%; left:0; height:1px; width:100%;"></div>
       </div>
@@ -478,6 +494,16 @@ widget.querySelector('#label-left').style.top = midY + 'px';
 widget.querySelector('#label-right').style.left = (contentMaxX + labelGap) + 'px';
 widget.querySelector('#label-right').style.top = midY + 'px';
 
+const labelGap2 = labelGap + 92;
+widget.querySelector('#label-arousal-top').style.left = midX + 'px';
+widget.querySelector('#label-arousal-top').style.top = (contentMinY - labelGap2) + 'px';
+widget.querySelector('#label-arousal-bottom').style.left = midX + 'px';
+widget.querySelector('#label-arousal-bottom').style.top = (contentMaxY + labelGap2) + 'px';
+widget.querySelector('#label-valenz-left').style.left = (contentMinX - labelGap2) + 'px';
+widget.querySelector('#label-valenz-left').style.top = midY + 'px';
+widget.querySelector('#label-valenz-right').style.left = (contentMaxX + labelGap2) + 'px';
+widget.querySelector('#label-valenz-right').style.top = midY + 'px';
+
 // ---- pan & zoom ----
 let scale = 0.5, tx = 0, ty = 0;
 function applyTransform(){
@@ -485,9 +511,9 @@ function applyTransform(){
 }
 function fitInitial(){
   const vw = viewport.clientWidth, vh = viewport.clientHeight;
-  const pad = 90;
-  const x0 = contentMinX - labelGap - pad, x1 = contentMaxX + labelGap + pad;
-  const y0 = contentMinY - labelGap - pad, y1 = contentMaxY + labelGap + pad;
+  const pad = 50;
+  const x0 = contentMinX - labelGap2 - pad, x1 = contentMaxX + labelGap2 + pad;
+  const y0 = contentMinY - labelGap2 - pad, y1 = contentMaxY + labelGap2 + pad;
   scale = Math.min(vw/(x1-x0), vh/(y1-y0));
   tx = vw/2 - ((x0+x1)/2)*scale;
   ty = vh/2 - ((y0+y1)/2)*scale;
