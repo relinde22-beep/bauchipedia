@@ -505,18 +505,41 @@ widget.querySelector('#label-valenz-right').style.left = (contentMaxX + labelGap
 widget.querySelector('#label-valenz-right').style.top = midY + 'px';
 
 // ---- pan & zoom ----
-let scale = 0.5, tx = 0, ty = 0;
+const FRAME_PAD = 50;
+const frameX0 = contentMinX - labelGap2 - FRAME_PAD, frameX1 = contentMaxX + labelGap2 + FRAME_PAD;
+const frameY0 = contentMinY - labelGap2 - FRAME_PAD, frameY1 = contentMaxY + labelGap2 + FRAME_PAD;
+
+let scale = 0.5, tx = 0, ty = 0, minScale = 0.3;
+
 function applyTransform(){
   world.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
 }
+
+// Keeps the framed content from being scrolled/zoomed further out than the
+// starting overview, and re-centers it whenever it would fit fully on an axis.
+function clampPan(){
+  const vw = viewport.clientWidth, vh = viewport.clientHeight;
+  const frameW = (frameX1-frameX0)*scale, frameH = (frameY1-frameY0)*scale;
+  if (frameW <= vw + 0.5){
+    tx = (vw - frameW)/2 - frameX0*scale;
+  } else {
+    const minTx = vw - frameX1*scale, maxTx = -frameX0*scale;
+    tx = Math.min(maxTx, Math.max(minTx, tx));
+  }
+  if (frameH <= vh + 0.5){
+    ty = (vh - frameH)/2 - frameY0*scale;
+  } else {
+    const minTy = vh - frameY1*scale, maxTy = -frameY0*scale;
+    ty = Math.min(maxTy, Math.max(minTy, ty));
+  }
+}
+
 function fitInitial(){
   const vw = viewport.clientWidth, vh = viewport.clientHeight;
-  const pad = 50;
-  const x0 = contentMinX - labelGap2 - pad, x1 = contentMaxX + labelGap2 + pad;
-  const y0 = contentMinY - labelGap2 - pad, y1 = contentMaxY + labelGap2 + pad;
-  scale = Math.min(vw/(x1-x0), vh/(y1-y0));
-  tx = vw/2 - ((x0+x1)/2)*scale;
-  ty = vh/2 - ((y0+y1)/2)*scale;
+  scale = Math.min(vw/(frameX1-frameX0), vh/(frameY1-frameY0));
+  minScale = scale;
+  tx = vw/2 - ((frameX0+frameX1)/2)*scale;
+  ty = vh/2 - ((frameY0+frameY1)/2)*scale;
   applyTransform();
 }
 window.addEventListener('resize', fitInitial);
@@ -533,6 +556,7 @@ window.addEventListener('mousemove', e => {
   const dx = e.clientX - dragStart.x, dy = e.clientY - dragStart.y;
   if (Math.abs(dx)+Math.abs(dy) > 4) moved = true;
   tx = dragStart.tx + dx; ty = dragStart.ty + dy;
+  clampPan();
   applyTransform();
 });
 window.addEventListener('mouseup', () => { isDragging=false; viewport.classList.remove('dragging'); });
@@ -541,24 +565,25 @@ function zoomAt(clientX, clientY, factor){
   const rect = viewport.getBoundingClientRect();
   const px = clientX-rect.left, py = clientY-rect.top;
   const wx = (px-tx)/scale, wy = (py-ty)/scale;
-  scale = Math.min(3, Math.max(0.15, scale*factor));
+  scale = Math.min(3, Math.max(minScale, scale*factor));
   tx = px - wx*scale;
   ty = py - wy*scale;
+  clampPan();
   applyTransform();
 }
 viewport.addEventListener('wheel', e => {
   e.preventDefault();
-  const factor = e.deltaY < 0 ? 1.12 : 1/1.12;
+  const factor = e.deltaY < 0 ? 1.045 : 1/1.045;
   zoomAt(e.clientX, e.clientY, factor);
 }, {passive:false});
 
 widget.querySelector('#zoom-in').addEventListener('click', () => {
   const r = viewport.getBoundingClientRect();
-  zoomAt(r.left+r.width/2, r.top+r.height/2, 1.25);
+  zoomAt(r.left+r.width/2, r.top+r.height/2, 1.15);
 });
 widget.querySelector('#zoom-out').addEventListener('click', () => {
   const r = viewport.getBoundingClientRect();
-  zoomAt(r.left+r.width/2, r.top+r.height/2, 1/1.25);
+  zoomAt(r.left+r.width/2, r.top+r.height/2, 1/1.15);
 });
 widget.querySelector('#zoom-reset').addEventListener('click', fitInitial);
 
@@ -579,12 +604,14 @@ viewport.addEventListener('touchmove', e => {
     const dx = e.touches[0].clientX - touchState.x;
     const dy = e.touches[0].clientY - touchState.y;
     tx = touchState.tx + dx; ty = touchState.ty + dy;
+    clampPan();
     applyTransform();
   } else if (touchState.mode === 'pinch' && e.touches.length === 2){
     const [a,b] = e.touches;
     const dist = Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY);
     const factor = dist/touchState.dist;
-    scale = Math.min(3, Math.max(0.15, touchState.scale*factor));
+    scale = Math.min(3, Math.max(minScale, touchState.scale*factor));
+    clampPan();
     applyTransform();
   }
 }, {passive:true});
@@ -624,7 +651,7 @@ function focusOn(ids){
   const panelWidth = Math.min(380, vw*0.92);
   const availW = Math.max(200, vw - panelWidth);
   const fitScale = Math.min(availW/(maxX-minX), vh/(maxY-minY));
-  scale = Math.min(1.3, Math.max(0.3, fitScale));
+  scale = Math.min(3, Math.max(minScale, fitScale));
   tx = availW/2 - ((minX+maxX)/2)*scale;
   ty = vh/2 - ((minY+maxY)/2)*scale;
   world.style.transition = 'transform .45s cubic-bezier(.2,.7,.3,1)';
