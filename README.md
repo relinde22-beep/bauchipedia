@@ -46,10 +46,18 @@ nicht pixelgenau nachgebaut.
 
 ## Einbindung in WordPress (WPBakery)
 
-1. `embed.html` mit einem reinen Text-Editor öffnen (nicht Word) und den
-   kompletten Inhalt kopieren (Strg/Cmd+A, dann kopieren)
-2. Seite/Beitrag im Backend bearbeiten → mit "+" ein Element hinzufügen →
-   nach **"Raw HTML"** suchen und einfügen
+**Wichtig:** `embed.html` niemals per Doppelklick öffnen bzw. in einem
+Rich-Text-Programm (TextEdit im Rich-Text-Modus, Word, Pages, …) öffnen –
+diese Programme interpretieren die HTML-Tags statt sie als Text anzuzeigen
+und zerschießen dabei den Code (Sonderzeichen wie ü/− werden z. B. zu
+"Ã¼"/"â^'"). Deshalb liegt zusätzlich `embed-code.txt` bei – exakt derselbe
+Inhalt, nur mit `.txt`-Endung, damit jeder Editor ihn garantiert als reinen
+Text öffnet.
+
+1. `embed-code.txt` öffnen, kompletten Inhalt markieren und kopieren
+   (Strg/Cmd+A, dann kopieren)
+2. Seite/Beitrag im WPBakery-Backend bearbeiten → mit "+" ein Element
+   hinzufügen → nach **"Raw HTML"** suchen und einfügen
 3. Den kopierten Inhalt in das Textfeld einfügen
 4. Speichern/Aktualisieren, dann die Seite ansehen
 

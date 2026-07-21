@@ -679,7 +679,7 @@ WIDGET_JS = (WIDGET_JS
     .replace("WORLD_W_PLACEHOLDER", "2600")
     .replace("WORLD_H_PLACEHOLDER", "2000"))
 
-EMBED_FRAGMENT = f"<style>{WIDGET_CSS}</style>\n{WIDGET_BODY}\n<script>{WIDGET_JS}</script>\n"
+EMBED_FRAGMENT = f'<meta charset="utf-8">\n<style>{WIDGET_CSS}</style>\n{WIDGET_BODY}\n<script>{WIDGET_JS}</script>\n'
 
 FULL_HTML = f"""<!doctype html>
 <html lang="de">
